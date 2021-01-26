@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Keep Password - TYHC</title>
+        <title>记密码-TYHC</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"/>
         <link rel="stylesheet" href="src/style.css" type="text/css"/>
@@ -400,7 +400,8 @@
             这是一个账号密码加密器，在右边（下面）录入你要记的账号密码，通过主密匙对这些信息加密得到密文，把密文保存在本地。下次忘记密码的时候，只需要把密文粘贴到左边（上面）并输入主密匙，就可以解出原来记录下的账号密码信息。<br/>
             密文相当于一个装着密码的保险柜，主密匙就是这个保险柜的钥匙，只要不忘记主密匙和不弄丢保险柜，就能打开得到里面的密码。
             <div class="info_title">工作原理</div>
-            本质为AES加/解密器+JSON解析器，明文密码储存为JSON格式字符串，再使用AES加密得到密文，反之解密后解析JSON字符串并显示。加/解密使用crypto-js，CBC模式，vi为空。所有操作均在前台完成。
+            本质为AES加/解密器+JSON解析器，明文密码储存为JSON格式字符串，再使用AES加密得到密文，反之解密后解析JSON字符串并显示。加/解密使用crypto-js，CBC模式，vi为空。所有操作均在前台完成。<br/>
+            <a href="http://nightship.cn/index.php/archives/174/" target="_blank">点我看详细说明</a>
             <div class="info_close">关闭</div>
         </div>
 
