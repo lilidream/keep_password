@@ -1,0 +1,416 @@
+<html>
+    <head>
+        <title>Keep Password - TYHC</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"/>
+        <link rel="stylesheet" href="src/style.css" type="text/css"/>
+        
+        <script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script>
+        <script src="src/crypto-js.js"></script>
+        <script>
+            var text = '[]';
+            var data = [];
+            var addWindow = 0;
+            var delItem = -1;
+
+            $(document).ready(function(){
+                //var data = JSON.parse(text);
+                //console.log(data);
+                $(".item_top").click(function(){
+                    var id = parseInt($(this).attr('id'));
+                    $("#item_"+id).slideToggle()
+                })
+                $("#add").click(function(){open_add_window()})
+                $("#add_cancel").click(function(){close_add_window()})
+                $(".black_bg").click(function(){close_add_window();close_del_window();close_what()})
+                $(".del_cancel").click(function(){close_del_window()})
+                $(".del_del").click(function(){del_item()})
+                $("#add_submit").click(function () {add_item()})
+                $(".info_close").click(function(){close_what()})
+
+                // 查看主密匙
+                $("#closeEye").click(function(){
+                    $("#key").attr("type","text");
+                    $("#closeEye").hide();
+                    $("#openEye").show()
+                })
+                $("#openEye").click(function(){
+                    $("#key").attr("type","password");
+                    $("#closeEye").show();
+                    $("#openEye").hide()
+                })
+                
+                // 复制
+                $(".copy").click(function(){
+                    var copyText = $("#text");
+                    copyText.select();
+                    document.execCommand("Copy");
+                    $(".copy").text("已复制!");
+                    setTimeout(function(){$(".copy").text("复制密文");},1000)
+                })
+
+                data = JSON.parse(text)
+                show_data(data)
+            })
+
+            // 加密
+            function getAesString(data,key,iv){
+                //var key  = CryptoJS.enc.Utf8.parse(key);
+                //var iv   = CryptoJS.enc.Utf8.parse(iv);
+                var encrypted =CryptoJS.AES.encrypt(data,key,
+                    {
+                        iv:iv,
+                        mode:CryptoJS.mode.CBC,
+                        padding:CryptoJS.pad.Pkcs7
+                    });
+                return encrypted.toString();    //返回的是base64格式的密文
+            }
+            // 解密
+            function getDAesString(encrypted,key,iv){//解密
+                //var key  = CryptoJS.enc.Utf8.parse(key);
+                //var iv   = CryptoJS.enc.Utf8.parse(iv);
+                var decrypted =CryptoJS.AES.decrypt(encrypted,key,
+                    {
+                        iv:iv,
+                        mode:CryptoJS.mode.CBC,
+                        padding:CryptoJS.pad.Pkcs7
+                    });
+                return decrypted.toString(CryptoJS.enc.Utf8);     
+            }
+
+            // 按下加密
+            function encrypt(){
+                var key = $("#key").val();
+                if(key != ""){
+                    text = JSON.stringify(data)
+                    $("#text").val(getAesString(text,key,''))
+                    $("#load_icon").hide(100);
+                    $("#error_icon").hide();
+                    $("#ok_icon").fadeIn(100);
+                    $(".center_tips div").text("加密成功");
+                    $(".center_tips div").css("color","#0e8632");
+                    $(".left_tips").slideDown()
+                }
+                else{
+                    $("#load_icon").hide(100);
+                    $("#error_icon").fadeIn(100);
+                    $(".center_tips div").css("color","#cc1313");
+                    $(".center_tips div").text("主密匙不能为空");
+                }
+                
+            }
+
+            //按下解密
+            function unencrypt(){
+                $("#load_icon").hide();
+                $("#error_icon").hide();
+                $("#ok_icon").hide();
+                $(".center_tips").slideDown();
+                $("#load_icon").fadeIn(100);
+                var t = $("#text").val();
+                var key = $("#key").val();
+                if(key != ""){
+                    try{
+                        text = getDAesString(t,key,'');
+                        $(".left_ta2").val(text)
+                        if (text == ""){
+                            $("#load_icon").hide(100);
+                            $("#error_icon").fadeIn(100);
+                            $(".center_tips div").css("color","#cc1313");
+                            $(".center_tips div").text("AES解密错误");
+                        }
+                        else{
+                            try{
+                                data = JSON.parse(text);
+                                show_data(data)
+                                $("#load_icon").hide(100);
+                                $("#error_icon").hide();
+                                $("#ok_icon").fadeIn(100);
+                                $(".center_tips div").text("解密成功");
+                                $(".center_tips div").css("color","#0e8632");
+                                $(".left_tips").slideDown()
+                            }catch(err){
+                                $("#load_icon").hide(100);
+                                $("#error_icon").fadeIn(100);
+                                console.log(err)
+                                $(".center_tips div").css("color","#cc1313");
+                                $(".center_tips div").text("JSON解析错误");
+                            }
+                        }
+                    }
+                    catch(err){
+                        $("#load_icon").hide(100);
+                        $("#error_icon").fadeIn(100);
+                        $(".center_tips div").css("color","#cc1313");
+                        $(".center_tips div").text("AES解密错误");
+                        console.log(err)
+                    }
+                    
+                }else{
+                    $("#load_icon").hide(100);
+                    $("#error_icon").fadeIn(100);
+                    $(".center_tips div").css("color","#cc1313");
+                    $(".center_tips div").text("主密匙不能为空");
+                }
+                
+                
+            }
+
+            //JSON解析
+            function show_data(data){
+                $("#item_box").empty()
+                if(data.length == 0){
+                    $("#item_box").append('<div class="item_tips">还没有账号信息哦，输入密文解密或添加一个吧</div>')
+                }
+
+                for(var i=0;i<data.length;i++){
+                    var addText = '<div class="item"><div class="item_top" id="'+i+'"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" title="登录信息"><g data-name="Layer 2"><g data-name="globe"><rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"/><path d="M22 12A10 10 0 0 0 12 2a10 10 0 0 0 0 20 10 10 0 0 0 10-10zm-2.07-1H17a12.91 12.91 0 0 0-2.33-6.54A8 8 0 0 1 19.93 11zM9.08 13H15a11.44 11.44 0 0 1-3 6.61A11 11 0 0 1 9.08 13zm0-2A11.4 11.4 0 0 1 12 4.4a11.19 11.19 0 0 1 3 6.6zm.36-6.57A13.18 13.18 0 0 0 7.07 11h-3a8 8 0 0 1 5.37-6.57zM4.07 13h3a12.86 12.86 0 0 0 2.35 6.56A8 8 0 0 1 4.07 13zm10.55 6.55A13.14 13.14 0 0 0 17 13h2.95a8 8 0 0 1-5.33 6.55z"/></g></g></svg><div class="site_name">'
+                    +data[i]['site']+'</div></div><div class="item_bottom_box" id="item_'+i+'"><div class="item_bottom" ><div class="item_left"><div class="info"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" title="用户名"><g data-name="Layer 2"><g data-name="person"><rect width="24" height="24" opacity="0"/><path d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0-6a2 2 0 1 1-2 2 2 2 0 0 1 2-2z"/><path d="M12 13a7 7 0 0 0-7 7 1 1 0 0 0 2 0 5 5 0 0 1 10 0 1 1 0 0 0 2 0 7 7 0 0 0-7-7z"/></g></g></svg><div class="info_text">'
+                    +data[i]['name']+'</div></div><div class="info"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" title="登录密码"><g data-name="Layer 2"><g data-name="lock"><rect width="24" height="24" opacity="0"/><path d="M17 8h-1V6.11a4 4 0 1 0-8 0V8H7a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3zm-7-1.89A2.06 2.06 0 0 1 12 4a2.06 2.06 0 0 1 2 2.11V8h-4zM18 19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1z"/><path d="M12 12a3 3 0 1 0 3 3 3 3 0 0 0-3-3zm0 4a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/></g></g></svg><div class="info_text pw">'
+                    +data[i]['password']+'</div></div>'
+                    
+                    if (data[i]['email'] != ""){
+                        addText += '<div class="info"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-email-outline eva-animation eva-icon-hover-zoom" fill="inherit" title="登记邮箱"><g data-name="Layer 2"><g data-name="email"><rect width="24" height="24" opacity="0"></rect><path d="M19 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-.67 2L12 10.75 5.67 6zM19 18H5a1 1 0 0 1-1-1V7.25l7.4 5.55a1 1 0 0 0 .6.2 1 1 0 0 0 .6-.2L20 7.25V17a1 1 0 0 1-1 1z"></path></g></g></svg><div class="info_text">'+data[i]['email']+'</div></div>'
+                    }
+                    if (data[i]['phone'] != ""){
+                        addText += '<div class="info"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-phone-outline eva-animation eva-icon-hover-zoom" fill="inherit" title="登记电话"><g data-name="Layer 2"><g data-name="phone"><rect width="24" height="24" opacity="0"></rect><path d="M17.4 22A15.42 15.42 0 0 1 2 6.6 4.6 4.6 0 0 1 6.6 2a3.94 3.94 0 0 1 .77.07 3.79 3.79 0 0 1 .72.18 1 1 0 0 1 .65.75l1.37 6a1 1 0 0 1-.26.92c-.13.14-.14.15-1.37.79a9.91 9.91 0 0 0 4.87 4.89c.65-1.24.66-1.25.8-1.38a1 1 0 0 1 .92-.26l6 1.37a1 1 0 0 1 .72.65 4.34 4.34 0 0 1 .19.73 4.77 4.77 0 0 1 .06.76A4.6 4.6 0 0 1 17.4 22zM6.6 4A2.61 2.61 0 0 0 4 6.6 13.41 13.41 0 0 0 17.4 20a2.61 2.61 0 0 0 2.6-2.6v-.33L15.36 16l-.29.55c-.45.87-.78 1.5-1.62 1.16a11.85 11.85 0 0 1-7.18-7.21c-.36-.78.32-1.14 1.18-1.59L8 8.64 6.93 4z"></path></g></g></svg><div class="info_text">'+data[i]['phone']+'</div></div>'
+                    }
+                    if (data[i]['link'].length > 0){
+                        addText += '<div class="info"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-log-in-outline eva-animation eva-icon-hover-zoom" fill="inherit" title="关联登录"><g data-name="Layer 2"><g data-name="log-in"><rect width="24" height="24" transform="rotate(-90 12 12)" opacity="0"></rect><path d="M19 4h-2a1 1 0 0 0 0 2h1v12h-1a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"></path><path d="M11.8 7.4a1 1 0 0 0-1.6 1.2L12 11H4a1 1 0 0 0 0 2h8.09l-1.72 2.44a1 1 0 0 0 .24 1.4 1 1 0 0 0 .58.18 1 1 0 0 0 .81-.42l2.82-4a1 1 0 0 0 0-1.18z"></path></g></g></svg><div class="info_link">'
+                        for( var j=0;j<data[i]['link'].length;j++){
+                            if(data[i]['link'][j]=='weibo'){
+                                addText += '<img src="src/weibo.png"/>'
+                            }else if(data[i]['link'][j] == 'qq'){
+                                addText += '<img src="src/qq.png"/>'
+                            }else if(data[i]['link'][j] == 'weixin'){
+                                addText += '<img src="src/weixin.png"/>'
+                            }else{
+                                addText += data[i]['link'][j]
+                            }
+                        }
+                        addText += '</div></div>'
+                    }
+                    addText += '</div><div class="item_del" id="'+i+'"><svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" class="eva eva-trash-2-outline" fill="inherit"><g data-name="Layer 2"><g data-name="trash-2"><rect width="24" height="24" opacity="0"></rect><path d="M21 6h-5V4.33A2.42 2.42 0 0 0 13.5 2h-3A2.42 2.42 0 0 0 8 4.33V6H3a1 1 0 0 0 0 2h1v11a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V8h1a1 1 0 0 0 0-2zM10 4.33c0-.16.21-.33.5-.33h3c.29 0 .5.17.5.33V6h-4zM18 19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V8h12z"></path><path d="M9 17a1 1 0 0 0 1-1v-4a1 1 0 0 0-2 0v4a1 1 0 0 0 1 1z"></path><path d="M15 17a1 1 0 0 0 1-1v-4a1 1 0 0 0-2 0v4a1 1 0 0 0 1 1z"></path></g></g></svg></div></div></div>'
+                    $("#item_box").append(addText)
+                }
+                
+                $(".item_top").click(function(){
+                    var id = parseInt($(this).attr('id'));
+                    $("#item_"+id).slideToggle()
+                })
+                $(".item_del").click(function(){
+                    var id = parseInt($(this).attr('id'));
+                    delItem = id;
+                    open_del_window()
+                })
+            }
+
+            // 打开添加窗口
+            function open_add_window(){
+                $(".black_bg").fadeIn(200);
+                $(".add_box").fadeIn(200);
+            }
+
+            function close_add_window(){
+                $(".black_bg").fadeOut(200);
+                $(".add_box").fadeOut(200);
+                $(".add_tips").slideUp()
+            }
+
+            function open_del_window(){
+                $(".black_bg").fadeIn(200);
+                $(".del_box").fadeIn(200);
+                $("#del_item_site").text(data[delItem]['site']);
+            }
+
+            function close_del_window(){
+                $(".black_bg").fadeOut(200);
+                $(".del_box").fadeOut(200);
+            }
+            
+            // 添加用户信息
+            function add_item(){
+                var site = $("#add_site").val();
+                var name = $("#add_name").val();
+                var pw = $("#add_password").val();
+                var email = $("#add_email").val();
+                var phone = $("#add_phone").val();
+                var otherLink = $("#add_link_other").val();
+                var weibo = $("#wb").prop("checked");
+                var weixin = $("#wx").prop("checked");
+                var qq = $("#qq").prop("checked");
+                if(site != "" && name != "" && pw != ""){
+                    var link = []
+                    if(weibo){link.push("weibo")}
+                    if(weixin){link.push("weixin")}
+                    if(qq){link.push("qq")}
+                    if(otherLink != ""){link.push(otherLink)}
+                    var d = {
+                        "site":site,
+                        "name":name,
+                        "password":pw,
+                        "email":email,
+                        "phone":phone,
+                        "link":link
+                    }
+                    data.push(d)
+                    close_add_window()
+                    show_data(data)
+                    $("#add_site").val("");
+                    $("#add_name").val("");
+                    $("#add_password").val("");
+                    $("#add_email").val("");
+                    $("#add_phone").val("");
+                    $("#add_link_other").val("");
+                }
+                else{
+                    $(".add_tips").slideDown()
+                }
+            }
+
+            // 删除用户信息
+            function del_item(){
+                data.splice(delItem,1)
+                delItem = -1
+                close_del_window()
+                show_data(data)
+            }
+            
+            // 查看明文
+            function openText(){
+                $(".left_ta2").slideDown()
+            }
+
+            // 查看说明
+            function open_what(){
+                $(".black_bg").fadeIn(200);
+                $(".info_box").fadeIn(200);
+            }
+
+            function close_what(){
+                $(".black_bg").fadeOut(200);
+                $(".info_box").fadeOut(200);
+            }
+
+        </script>
+    </head>
+    <body>
+        <!--顶部-->
+        <div class="top">
+            <a href="http://nightship.cn" target="_blank" ><img src="src/logo.png" title="TOYOHAY Clouds"/></a>
+        </div>
+
+        <!--功能区-->
+        <div class="container">
+            <div class="left">
+                <textarea id="text" class="left_ta1" placeholder="将密文粘贴至此"></textarea>
+                <div class="left_tips">
+                    <a href="javascript:openText()">查看解密后文本</a>
+                    <div class="copy">复制密文</div>
+                </div>
+                <textarea id="text2" class="left_ta2"></textarea>
+            </div>
+            <hr class="narrow"/>
+            <div class="center">
+                <div class="main_key">
+                    <input type="password" placeholder="主密匙" id='key'/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-eye-off-2-outline eva-animation eva-icon-hover-zoom" fill="inherit" id='closeEye'><g data-name="Layer 2"><g data-name="eye-off-2"><rect width="24" height="24" opacity="0"></rect><path d="M17.81 13.39A8.93 8.93 0 0 0 21 7.62a1 1 0 1 0-2-.24 7.07 7.07 0 0 1-14 0 1 1 0 1 0-2 .24 8.93 8.93 0 0 0 3.18 5.77l-2.3 2.32a1 1 0 0 0 1.41 1.41l2.61-2.6a9.06 9.06 0 0 0 3.1.92V19a1 1 0 0 0 2 0v-3.56a9.06 9.06 0 0 0 3.1-.92l2.61 2.6a1 1 0 0 0 1.41-1.41z"></path></g></g></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-eye-outline eva-animation eva-icon-hover-zoom" fill="inherit" id='openEye' style="display: none;fill:#FFFFFF;background-color:#46c3c3"><g data-name="Layer 2"><g data-name="eye"><rect width="24" height="24" opacity="0"></rect><path d="M21.87 11.5c-.64-1.11-4.16-6.68-10.14-6.5-5.53.14-8.73 5-9.6 6.5a1 1 0 0 0 0 1c.63 1.09 4 6.5 9.89 6.5h.25c5.53-.14 8.74-5 9.6-6.5a1 1 0 0 0 0-1zM12.22 17c-4.31.1-7.12-3.59-8-5 1-1.61 3.61-4.9 7.61-5 4.29-.11 7.11 3.59 8 5-1.03 1.61-3.61 4.9-7.61 5z"></path><path d="M12 8.5a3.5 3.5 0 1 0 3.5 3.5A3.5 3.5 0 0 0 12 8.5zm0 5a1.5 1.5 0 1 1 1.5-1.5 1.5 1.5 0 0 1-1.5 1.5z"></path></g></g></svg>
+                </div>
+                <button id="to_text" onclick="encrypt()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-arrowhead-left-outline eva-animation eva-icon-hover-zoom" fill="inherit"><g data-name="Layer 2"><g data-name="arrowhead-left"><rect width="24" height="24" transform="rotate(90 12 12)" opacity="0"></rect><path d="M11.64 5.23a1 1 0 0 0-1.41.13l-5 6a1 1 0 0 0 0 1.27l4.83 6a1 1 0 0 0 .78.37 1 1 0 0 0 .78-1.63L7.29 12l4.48-5.37a1 1 0 0 0-.13-1.4z"></path><path d="M14.29 12l4.48-5.37a1 1 0 0 0-1.54-1.28l-5 6a1 1 0 0 0 0 1.27l4.83 6a1 1 0 0 0 .78.37 1 1 0 0 0 .78-1.63z"></path></g></g></svg>转成密文
+                </button>  
+                <button id="to_pw" onclick="unencrypt()">
+                    还原密文<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-arrowhead-right-outline eva-animation eva-icon-hover-zoom" fill="inherit"><g data-name="Layer 2"><g data-name="arrowhead-right"><rect width="24" height="24" transform="rotate(-90 12 12)" opacity="0"></rect><path d="M18.78 11.37l-4.78-6a1 1 0 0 0-1.41-.15 1 1 0 0 0-.15 1.41L16.71 12l-4.48 5.37a1 1 0 0 0 .13 1.41A1 1 0 0 0 13 19a1 1 0 0 0 .77-.36l5-6a1 1 0 0 0 .01-1.27z"></path><path d="M7 5.37a1 1 0 0 0-1.61 1.26L9.71 12l-4.48 5.36a1 1 0 0 0 .13 1.41A1 1 0 0 0 6 19a1 1 0 0 0 .77-.36l5-6a1 1 0 0 0 0-1.27z"></path></g></g></svg>
+                </button>
+                <div class="center_tips">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-alert-triangle-outline eva-animation eva-icon-hover-zoom" fill="inherit" id="error_icon" style="fill: #cc1313;display:none"><g data-name="Layer 2"><g data-name="alert-triangle"><rect width="24" height="24" transform="rotate(90 12 12)" opacity="0"></rect><path d="M22.56 16.3L14.89 3.58a3.43 3.43 0 0 0-5.78 0L1.44 16.3a3 3 0 0 0-.05 3A3.37 3.37 0 0 0 4.33 21h15.34a3.37 3.37 0 0 0 2.94-1.66 3 3 0 0 0-.05-3.04zm-1.7 2.05a1.31 1.31 0 0 1-1.19.65H4.33a1.31 1.31 0 0 1-1.19-.65 1 1 0 0 1 0-1l7.68-12.73a1.48 1.48 0 0 1 2.36 0l7.67 12.72a1 1 0 0 1 .01 1.01z"></path><circle cx="12" cy="16" r="1"></circle><path d="M12 8a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V9a1 1 0 0 0-1-1z"></path></g></g></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-checkmark-circle-2-outline eva-animation eva-icon-hover-zoom" fill="inherit" id='ok_icon' style="fill: #0e8632;display:none"><g data-name="Layer 2"><g data-name="checkmark-circle-2"><rect width="24" height="24" opacity="0"></rect><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><path d="M14.7 8.39l-3.78 5-1.63-2.11a1 1 0 0 0-1.58 1.23l2.43 3.11a1 1 0 0 0 .79.38 1 1 0 0 0 .79-.39l4.57-6a1 1 0 1 0-1.6-1.22z"></path></g></g></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-loader-outline eva-animation eva-icon-hover-zoom" fill="inherit" id='load_icon' style="fill:#888888;display:none"><g data-name="Layer 2"><g data-name="loader"><rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"></rect><path d="M12 2a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0V3a1 1 0 0 0-1-1z"></path><path d="M21 11h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0-2z"></path><path d="M6 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1z"></path><path d="M6.22 5a1 1 0 0 0-1.39 1.47l1.44 1.39a1 1 0 0 0 .73.28 1 1 0 0 0 .72-.31 1 1 0 0 0 0-1.41z"></path><path d="M17 8.14a1 1 0 0 0 .69-.28l1.44-1.39A1 1 0 0 0 17.78 5l-1.44 1.42a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.31z"></path><path d="M12 18a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-2a1 1 0 0 0-1-1z"></path><path d="M17.73 16.14a1 1 0 0 0-1.39 1.44L17.78 19a1 1 0 0 0 .69.28 1 1 0 0 0 .72-.3 1 1 0 0 0 0-1.42z"></path><path d="M6.27 16.14l-1.44 1.39a1 1 0 0 0 0 1.42 1 1 0 0 0 .72.3 1 1 0 0 0 .67-.25l1.44-1.39a1 1 0 0 0-1.39-1.44z"></path></g></g></svg>
+                    <div id='error_text'></div>
+                </div>
+                <hr/>
+                <div class="question">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-question-mark-circle-outline eva-animation eva-icon-hover-zoom" fill="inherit"><g data-name="Layer 2"><g data-name="menu-arrow-circle"><rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"></rect><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><path d="M12 6a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0A1.5 1.5 0 1 1 12 11a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-1.16A3.49 3.49 0 0 0 12 6z"></path><circle cx="12" cy="17" r="1"></circle></g></g></svg><a href="javascript:open_what()">这是什么？</a>
+                </div>
+            </div>
+            <hr class="narrow"/>
+            <div class="right">
+                <div class="add" id="add">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-plus-outline eva-animation eva-icon-hover-zoom" fill="inherit"><g data-name="Layer 2"><g data-name="plus"><rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"></rect><path d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2z"></path></g></g></svg>添加密码
+                </div>
+                <div id="item_box"></div>
+            </div>
+        </div>
+
+        <!--黑屏-->
+        <div class="black_bg"></div>
+        
+        <!--添加弹窗-->
+        <div class="add_box">
+            <div class='add_info'>
+                <svg xmlns="http://www.w3.org/2000/svg" class="orange" viewBox="0 0 24 24" title="登录信息"><g data-name="Layer 2"><g data-name="globe"><rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"/><path d="M22 12A10 10 0 0 0 12 2a10 10 0 0 0 0 20 10 10 0 0 0 10-10zm-2.07-1H17a12.91 12.91 0 0 0-2.33-6.54A8 8 0 0 1 19.93 11zM9.08 13H15a11.44 11.44 0 0 1-3 6.61A11 11 0 0 1 9.08 13zm0-2A11.4 11.4 0 0 1 12 4.4a11.19 11.19 0 0 1 3 6.6zm.36-6.57A13.18 13.18 0 0 0 7.07 11h-3a8 8 0 0 1 5.37-6.57zM4.07 13h3a12.86 12.86 0 0 0 2.35 6.56A8 8 0 0 1 4.07 13zm10.55 6.55A13.14 13.14 0 0 0 17 13h2.95a8 8 0 0 1-5.33 6.55z"/></g></g></svg>
+                <input type="text" id='add_site' placeholder="账户所在网站/APP"/>
+            </div>
+            <div class="add_info">
+               <svg xmlns="http://www.w3.org/2000/svg" class="orange" viewBox="0 0 24 24" title="用户名"><g data-name="Layer 2"><g data-name="person"><rect width="24" height="24" opacity="0"/><path d="M12 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0-6a2 2 0 1 1-2 2 2 2 0 0 1 2-2z"/><path d="M12 13a7 7 0 0 0-7 7 1 1 0 0 0 2 0 5 5 0 0 1 10 0 1 1 0 0 0 2 0 7 7 0 0 0-7-7z"/></g></g></svg>
+               <input type="text" id="add_name" placeholder="登录用户名/邮箱"/>
+            </div>
+            <div class="add_info">
+                <svg xmlns="http://www.w3.org/2000/svg" class="orange" viewBox="0 0 24 24" title="登录密码"><g data-name="Layer 2"><g data-name="lock"><rect width="24" height="24" opacity="0"/><path d="M17 8h-1V6.11a4 4 0 1 0-8 0V8H7a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3zm-7-1.89A2.06 2.06 0 0 1 12 4a2.06 2.06 0 0 1 2 2.11V8h-4zM18 19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1z"/><path d="M12 12a3 3 0 1 0 3 3 3 3 0 0 0-3-3zm0 4a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/></g></g></svg>
+                <input type="password" id='add_password' placeholder="登录密码"/>
+            </div>
+            <div class="add_info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-email-outline eva-animation eva-icon-hover-zoom green" fill="inherit" title="登记邮箱"><g data-name="Layer 2"><g data-name="email"><rect width="24" height="24" opacity="0"></rect><path d="M19 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-.67 2L12 10.75 5.67 6zM19 18H5a1 1 0 0 1-1-1V7.25l7.4 5.55a1 1 0 0 0 .6.2 1 1 0 0 0 .6-.2L20 7.25V17a1 1 0 0 1-1 1z"></path></g></g></svg>
+                <input type="text" id="add_email" placeholder="绑定的邮箱"/>
+            </div>
+            <div class="add_info">
+                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-phone-outline eva-animation eva-icon-hover-zoom green" fill="inherit" title="登记电话"><g data-name="Layer 2"><g data-name="phone"><rect width="24" height="24" opacity="0"></rect><path d="M17.4 22A15.42 15.42 0 0 1 2 6.6 4.6 4.6 0 0 1 6.6 2a3.94 3.94 0 0 1 .77.07 3.79 3.79 0 0 1 .72.18 1 1 0 0 1 .65.75l1.37 6a1 1 0 0 1-.26.92c-.13.14-.14.15-1.37.79a9.91 9.91 0 0 0 4.87 4.89c.65-1.24.66-1.25.8-1.38a1 1 0 0 1 .92-.26l6 1.37a1 1 0 0 1 .72.65 4.34 4.34 0 0 1 .19.73 4.77 4.77 0 0 1 .06.76A4.6 4.6 0 0 1 17.4 22zM6.6 4A2.61 2.61 0 0 0 4 6.6 13.41 13.41 0 0 0 17.4 20a2.61 2.61 0 0 0 2.6-2.6v-.33L15.36 16l-.29.55c-.45.87-.78 1.5-1.62 1.16a11.85 11.85 0 0 1-7.18-7.21c-.36-.78.32-1.14 1.18-1.59L8 8.64 6.93 4z"></path></g></g></svg>
+                <input type="text" id="add_phone" placeholder="绑定的手机号"/>
+            </div>
+            <div class="add_link">
+                <div style="display: flex;align-items: center;font-size: 16px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-log-in-outline eva-animation eva-icon-hover-zoom green" fill="inherit" title="关联登录"><g data-name="Layer 2"><g data-name="log-in"><rect width="24" height="24" transform="rotate(-90 12 12)" opacity="0"></rect><path d="M19 4h-2a1 1 0 0 0 0 2h1v12h-1a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1z"></path><path d="M11.8 7.4a1 1 0 0 0-1.6 1.2L12 11H4a1 1 0 0 0 0 2h8.09l-1.72 2.44a1 1 0 0 0 .24 1.4 1 1 0 0 0 .58.18 1 1 0 0 0 .81-.42l2.82-4a1 1 0 0 0 0-1.18z"></path></g></g></svg>
+                    关联登录
+                </div>
+                <div class="add_cb"><input type="checkbox" name="add_link" value="weibo" id='wb'/><label for="wb">微博</label></div>
+                <div class="add_cb"><input type="checkbox" name="add_link" value="weixin" id='wx'/><label for="wx">微信</label></div>
+                <div class="add_cb"><input type="checkbox" name="add_link" value="qq" id='qq'/><label for="qq">QQ</label></div>
+                <input class="add_link_input" type="text" placeholder="其他" id='add_link_other'/>
+            </div>
+            <div class="add_tips">请填写必要内容（红色图标）</div>
+            <div class="add_info" style="margin-top: 10px;">
+                <div class="add_cancel" id='add_cancel'>取消</div>
+                <div class="add_submit" id='add_submit'>添加</div>
+            </div>
+        </div>
+
+        <!--删除弹窗-->
+        <div class="del_box">
+            <div class="del_text">真的要删除<font id='del_item_site'></font>吗</div>
+            <div class="del_buttom">
+                <div class="del_cancel">取消</div>
+                <div class="del_del">删除</div>
+            </div>
+        </div>
+
+        <!--信息弹窗-->
+        <div class="info_box">
+            <div class="info_title">这是什么</div>
+            这是一个账号密码加密器，在右边（下面）录入你要记的账号密码，通过主密匙对这些信息加密得到密文，把密文保存在本地。下次忘记密码的时候，只需要把密文粘贴到左边（上面）并输入主密匙，就可以解出原来记录下的账号密码信息。<br/>
+            密文相当于一个装着密码的保险柜，主密匙就是这个保险柜的钥匙，只要不忘记主密匙和不弄丢保险柜，就能打开得到里面的密码。
+            <div class="info_title">工作原理</div>
+            本质为AES加/解密器+JSON解析器，明文密码储存为JSON格式字符串，再使用AES加密得到密文，反之解密后解析JSON字符串并显示。加/解密使用crypto-js，CBC模式，vi为空。所有操作均在前台完成。
+            <div class="info_close">关闭</div>
+        </div>
+
+        <hr style="margin-top: 50px;background-color: #cccccc;"/>
+        <div class="footer">
+            © 2021 TOYOHAY CLOUDS.<br/> 
+            <a href="https://github.com/lilidream/keep_password" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-github-outline eva-animation eva-icon-hover-zoom" fill="inherit" style="fill:#888888;height:16px;width:16px;margin:0px"><g data-name="Layer 2"><rect width="24" height="24" opacity="0"></rect><path d="M16.24 22a1 1 0 0 1-1-1v-2.6a2.15 2.15 0 0 0-.54-1.66 1 1 0 0 1 .61-1.67C17.75 14.78 20 14 20 9.77a4 4 0 0 0-.67-2.22 2.75 2.75 0 0 1-.41-2.06 3.71 3.71 0 0 0 0-1.41 7.65 7.65 0 0 0-2.09 1.09 1 1 0 0 1-.84.15 10.15 10.15 0 0 0-5.52 0 1 1 0 0 1-.84-.15 7.4 7.4 0 0 0-2.11-1.09 3.52 3.52 0 0 0 0 1.41 2.84 2.84 0 0 1-.43 2.08 4.07 4.07 0 0 0-.67 2.23c0 3.89 1.88 4.93 4.7 5.29a1 1 0 0 1 .82.66 1 1 0 0 1-.21 1 2.06 2.06 0 0 0-.55 1.56V21a1 1 0 0 1-2 0v-.57a6 6 0 0 1-5.27-2.09 3.9 3.9 0 0 0-1.16-.88 1 1 0 1 1 .5-1.94 4.93 4.93 0 0 1 2 1.36c1 1 2 1.88 3.9 1.52a3.89 3.89 0 0 1 .23-1.58c-2.06-.52-5-2-5-7a6 6 0 0 1 1-3.33.85.85 0 0 0 .13-.62 5.69 5.69 0 0 1 .33-3.21 1 1 0 0 1 .63-.57c.34-.1 1.56-.3 3.87 1.2a12.16 12.16 0 0 1 5.69 0c2.31-1.5 3.53-1.31 3.86-1.2a1 1 0 0 1 .63.57 5.71 5.71 0 0 1 .33 3.22.75.75 0 0 0 .11.57 6 6 0 0 1 1 3.34c0 5.07-2.92 6.54-5 7a4.28 4.28 0 0 1 .22 1.67V21a1 1 0 0 1-.94 1z"></path></g></svg>Start Me</a> | Icon by <a target="_blank" href="https://akveo.github.io/eva-icons/#/"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-color-palette-outline eva-animation eva-icon-hover-zoom" fill="inherit" style="fill:#FFA8B4;height:16px;width:16px;margin:0px"><g data-name="Layer 2"><g data-name="color-palette"><rect width="24" height="24" opacity="0"></rect><path d="M19.54 5.08A10.61 10.61 0 0 0 11.91 2a10 10 0 0 0-.05 20 2.58 2.58 0 0 0 2.53-1.89 2.52 2.52 0 0 0-.57-2.28.5.5 0 0 1 .37-.83h1.65A6.15 6.15 0 0 0 22 11.33a8.48 8.48 0 0 0-2.46-6.25zM15.88 15h-1.65a2.49 2.49 0 0 0-1.87 4.15.49.49 0 0 1 .12.49c-.05.21-.28.34-.59.36a8 8 0 0 1-7.82-9.11A8.1 8.1 0 0 1 11.92 4H12a8.47 8.47 0 0 1 6.1 2.48 6.5 6.5 0 0 1 1.9 4.77A4.17 4.17 0 0 1 15.88 15z"></path><circle cx="12" cy="6.5" r="1.5"></circle><path d="M15.25 7.2a1.5 1.5 0 1 0 2.05.55 1.5 1.5 0 0 0-2.05-.55z"></path><path d="M8.75 7.2a1.5 1.5 0 1 0 .55 2.05 1.5 1.5 0 0 0-.55-2.05z"></path><path d="M6.16 11.26a1.5 1.5 0 1 0 2.08.4 1.49 1.49 0 0 0-2.08-.4z"></path></g></g></svg>Eva Icons</a><br/>
+            Build by Lilidream (
+                <img src="src/weibo.png">
+            <a href="https://weibo.com/particledream">@粒粒梦想</a>).
+        </div>
+    </body>
+</html>
