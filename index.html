@@ -262,6 +262,9 @@
                     $("#add_email").val("");
                     $("#add_phone").val("");
                     $("#add_link_other").val("");
+                    $("#wb").prop("checked",false);
+                    $("#wx").prop("checked",false);
+                    $("#qq").prop("checked",false);
                 }
                 else{
                     $(".add_tips").slideDown()
@@ -333,6 +336,7 @@
                 <div class="question">
                     <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-question-mark-circle-outline eva-animation eva-icon-hover-zoom" fill="inherit"><g data-name="Layer 2"><g data-name="menu-arrow-circle"><rect width="24" height="24" transform="rotate(180 12 12)" opacity="0"></rect><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path><path d="M12 6a3.5 3.5 0 0 0-3.5 3.5 1 1 0 0 0 2 0A1.5 1.5 0 1 1 12 11a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-1.16A3.49 3.49 0 0 0 12 6z"></path><circle cx="12" cy="17" r="1"></circle></g></g></svg><a href="javascript:open_what()">这是什么？</a>
                 </div>
+                <div class="anno">加密方法：AES，本站只提供加/解密转换，并不提供密码在线储存服务</div>
             </div>
             <hr class="narrow"/>
             <div class="right">
@@ -358,7 +362,7 @@
             </div>
             <div class="add_info">
                 <svg xmlns="http://www.w3.org/2000/svg" class="orange" viewBox="0 0 24 24" title="登录密码"><g data-name="Layer 2"><g data-name="lock"><rect width="24" height="24" opacity="0"/><path d="M17 8h-1V6.11a4 4 0 1 0-8 0V8H7a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-8a3 3 0 0 0-3-3zm-7-1.89A2.06 2.06 0 0 1 12 4a2.06 2.06 0 0 1 2 2.11V8h-4zM18 19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1z"/><path d="M12 12a3 3 0 1 0 3 3 3 3 0 0 0-3-3zm0 4a1 1 0 1 1 1-1 1 1 0 0 1-1 1z"/></g></g></svg>
-                <input type="password" id='add_password' placeholder="登录密码"/>
+                <input type="text" id='add_password' placeholder="登录密码"/>
             </div>
             <div class="add_info">
                 <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-email-outline eva-animation eva-icon-hover-zoom green" fill="inherit" title="登记邮箱"><g data-name="Layer 2"><g data-name="email"><rect width="24" height="24" opacity="0"></rect><path d="M19 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm-.67 2L12 10.75 5.67 6zM19 18H5a1 1 0 0 1-1-1V7.25l7.4 5.55a1 1 0 0 0 .6.2 1 1 0 0 0 .6-.2L20 7.25V17a1 1 0 0 1-1 1z"></path></g></g></svg>
@@ -385,6 +389,7 @@
             </div>
         </div>
 
+
         <!--删除弹窗-->
         <div class="del_box">
             <div class="del_text">真的要删除<font id='del_item_site'></font>吗</div>
@@ -394,11 +399,12 @@
             </div>
         </div>
 
+
         <!--信息弹窗-->
         <div class="info_box">
             <div class="info_title">这是什么</div>
             这是一个账号密码加密器，在右边（下面）录入你要记的账号密码，通过主密匙对这些信息加密得到密文，把密文保存在本地。下次忘记密码的时候，只需要把密文粘贴到左边（上面）并输入主密匙，就可以解出原来记录下的账号密码信息。<br/>
-            密文相当于一个装着密码的保险柜，主密匙就是这个保险柜的钥匙，只要不忘记主密匙和不弄丢保险柜，就能打开得到里面的密码。
+            相比于储存明文密码，加密的账号信息即使被盗也更安全。密文相当于一个装着密码的保险柜，主密匙就是这个保险柜的钥匙，只要不忘记主密匙和不弄丢保险柜，就能打开得到里面的密码。
             <div class="info_title">工作原理</div>
             本质为AES加/解密器+JSON解析器，明文密码储存为JSON格式字符串，再使用AES加密得到密文，反之解密后解析JSON字符串并显示。加/解密使用crypto-js，CBC模式，vi为空。所有操作均在前台完成。<br/>
             <a href="http://nightship.cn/index.php/archives/174/" target="_blank">点我看详细说明</a>
@@ -407,7 +413,7 @@
 
         <hr style="margin-top: 50px;background-color: #cccccc;"/>
         <div class="footer">
-            © 2021 TOYOHAY CLOUDS.<br/> 
+            © 2021 TOYOHAY CLOUDS.<script type="text/javascript">document.write(unescape("%3Cspan id='cnzz_stat_icon_1279652371'%3E%3C/span%3E%3Cscript src='https://s9.cnzz.com/z_stat.php%3Fid%3D1279652371%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));</script><br/>
             <a href="https://github.com/lilidream/keep_password" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-github-outline eva-animation eva-icon-hover-zoom" fill="inherit" style="fill:#888888;height:16px;width:16px;margin:0px"><g data-name="Layer 2"><rect width="24" height="24" opacity="0"></rect><path d="M16.24 22a1 1 0 0 1-1-1v-2.6a2.15 2.15 0 0 0-.54-1.66 1 1 0 0 1 .61-1.67C17.75 14.78 20 14 20 9.77a4 4 0 0 0-.67-2.22 2.75 2.75 0 0 1-.41-2.06 3.71 3.71 0 0 0 0-1.41 7.65 7.65 0 0 0-2.09 1.09 1 1 0 0 1-.84.15 10.15 10.15 0 0 0-5.52 0 1 1 0 0 1-.84-.15 7.4 7.4 0 0 0-2.11-1.09 3.52 3.52 0 0 0 0 1.41 2.84 2.84 0 0 1-.43 2.08 4.07 4.07 0 0 0-.67 2.23c0 3.89 1.88 4.93 4.7 5.29a1 1 0 0 1 .82.66 1 1 0 0 1-.21 1 2.06 2.06 0 0 0-.55 1.56V21a1 1 0 0 1-2 0v-.57a6 6 0 0 1-5.27-2.09 3.9 3.9 0 0 0-1.16-.88 1 1 0 1 1 .5-1.94 4.93 4.93 0 0 1 2 1.36c1 1 2 1.88 3.9 1.52a3.89 3.89 0 0 1 .23-1.58c-2.06-.52-5-2-5-7a6 6 0 0 1 1-3.33.85.85 0 0 0 .13-.62 5.69 5.69 0 0 1 .33-3.21 1 1 0 0 1 .63-.57c.34-.1 1.56-.3 3.87 1.2a12.16 12.16 0 0 1 5.69 0c2.31-1.5 3.53-1.31 3.86-1.2a1 1 0 0 1 .63.57 5.71 5.71 0 0 1 .33 3.22.75.75 0 0 0 .11.57 6 6 0 0 1 1 3.34c0 5.07-2.92 6.54-5 7a4.28 4.28 0 0 1 .22 1.67V21a1 1 0 0 1-.94 1z"></path></g></svg>Start Me</a> | Icon by <a target="_blank" href="https://akveo.github.io/eva-icons/#/"><svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" class="eva eva-color-palette-outline eva-animation eva-icon-hover-zoom" fill="inherit" style="fill:#FFA8B4;height:16px;width:16px;margin:0px"><g data-name="Layer 2"><g data-name="color-palette"><rect width="24" height="24" opacity="0"></rect><path d="M19.54 5.08A10.61 10.61 0 0 0 11.91 2a10 10 0 0 0-.05 20 2.58 2.58 0 0 0 2.53-1.89 2.52 2.52 0 0 0-.57-2.28.5.5 0 0 1 .37-.83h1.65A6.15 6.15 0 0 0 22 11.33a8.48 8.48 0 0 0-2.46-6.25zM15.88 15h-1.65a2.49 2.49 0 0 0-1.87 4.15.49.49 0 0 1 .12.49c-.05.21-.28.34-.59.36a8 8 0 0 1-7.82-9.11A8.1 8.1 0 0 1 11.92 4H12a8.47 8.47 0 0 1 6.1 2.48 6.5 6.5 0 0 1 1.9 4.77A4.17 4.17 0 0 1 15.88 15z"></path><circle cx="12" cy="6.5" r="1.5"></circle><path d="M15.25 7.2a1.5 1.5 0 1 0 2.05.55 1.5 1.5 0 0 0-2.05-.55z"></path><path d="M8.75 7.2a1.5 1.5 0 1 0 .55 2.05 1.5 1.5 0 0 0-.55-2.05z"></path><path d="M6.16 11.26a1.5 1.5 0 1 0 2.08.4 1.49 1.49 0 0 0-2.08-.4z"></path></g></g></svg>Eva Icons</a><br/>
             Build by Lilidream (
                 <img src="src/weibo.png">
